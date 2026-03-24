@@ -8,8 +8,10 @@ sv0-mcp maintains a Neo4j knowledge graph of the sv0 toolchain — specification
 
 two MCP servers provide AI-assisted development:
 
-1. **generic Neo4j tools** — `search_memories`, `read_neo4j_cypher`, `write_neo4j_cypher` via the standard `mcp-neo4j-memory` and `mcp-neo4j-cypher` servers, pointed at the dedicated sv0 instance
+1. **generic Neo4j Cypher access** — `read_neo4j_cypher`, `write_neo4j_cypher`, `get_neo4j_schema` via the standard `mcp-neo4j-cypher` server, pointed at the dedicated sv0 instance
 2. **sv0-specific tools** — domain-aware operations like `get_spec_for_phase`, `trace_rule_to_implementation`, `get_milestone_progress`, `get_compiler_pipeline`
+
+> **note:** the `mcp-neo4j-memory` server is **not compatible** with the sv0 graph schema. it operates on `Memory`-labeled nodes, whereas sv0 uses `Entity` as the base label with typed secondary labels (e.g. `GrammarProduction`, `CompilerPhase`). use the `sv0-graph` server's `search_spec` and `get_entity_graph` tools for discovery, or `sv0-neo4j-cypher` for ad-hoc queries.
 
 ## setup
 
@@ -49,22 +51,13 @@ uv run sv0-mcp serve
 
 add the following to your cursor MCP settings to connect both the generic and custom servers.
 
-### generic neo4j tools (sv0 instance)
+### generic neo4j cypher access (sv0 instance)
 
 ```json
 {
   "sv0-neo4j-cypher": {
     "command": "uvx",
     "args": ["mcp-neo4j-cypher"],
-    "env": {
-      "NEO4J_URI": "bolt://localhost:7688",
-      "NEO4J_USERNAME": "neo4j",
-      "NEO4J_PASSWORD": "sv0-graph-dev"
-    }
-  },
-  "sv0-neo4j-memory": {
-    "command": "uvx",
-    "args": ["mcp-neo4j-memory"],
     "env": {
       "NEO4J_URI": "bolt://localhost:7688",
       "NEO4J_USERNAME": "neo4j",

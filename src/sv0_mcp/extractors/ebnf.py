@@ -124,7 +124,9 @@ class EbnfExtractor(BaseExtractor):
 
             section_match = _SECTION_RE.search(line)
             if section_match:
-                current_section = section_match.group(1).strip().lower()
+                text = section_match.group(1).strip()
+                if text == text.upper():
+                    current_section = text.lower()
                 i += 1
                 continue
 

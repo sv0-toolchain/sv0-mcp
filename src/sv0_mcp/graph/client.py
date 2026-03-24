@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import neo4j
 
+from sv0_mcp.models.base import EntityType
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -133,12 +135,19 @@ class GraphClient:
     # Entity operations
     # ------------------------------------------------------------------
 
+    _ENTITY_TYPE_LABELS: tuple[str, ...] = tuple(
+        et.value for et in EntityType
+    )
+
     def merge_entity(self, entity: Entity) -> None:
         """MERGE an entity into the graph.
 
         Uses ``entity.name`` as the unique key.  Sets all properties
         and observations.  Applies ``entity_type`` as an additional
         Neo4j node label (e.g. ``GrammarProduction``).
+
+        Stale type labels from previous categorisations are removed
+        before the new label is applied to prevent label drift.
 
         Args:
             entity: The entity to merge.
@@ -156,8 +165,14 @@ class GraphClient:
             for k, v in entity.properties.items()
             if k not in ("name", "entity_type", "observations")
         }
+        remove_clauses = " ".join(
+            f"REMOVE n:{lbl}"
+            for lbl in self._ENTITY_TYPE_LABELS
+            if lbl != label
+        )
         query = (
             f"MERGE (n:Entity {{name: $name}}) "
+            f"{remove_clauses} "
             f"SET n:{label}, "
             "n.entity_type = $entity_type, "
             "n.observations = $observations "
