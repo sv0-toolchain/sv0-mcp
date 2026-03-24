@@ -38,7 +38,7 @@ def create_server() -> FastMCP:  # noqa: PLR0915
 
     mcp = FastMCP(
         "sv0-graph",
-        description=(
+        instructions=(
             "Knowledge graph server for the "
             "sv0 programming language toolchain"
         ),

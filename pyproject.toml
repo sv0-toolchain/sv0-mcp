@@ -3,7 +3,7 @@ name = "sv0-mcp"
 version = "0.1.0"
 description = "Self-updating graph memory and MCP server for the sv0 programming language toolchain"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Sasank Vishnubhatla" }]
 
@@ -38,7 +38,7 @@ build-backend = "hatchling.build"
 packages = ["src/sv0_mcp"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
 
@@ -93,7 +93,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true

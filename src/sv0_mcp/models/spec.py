@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from sv0_mcp.models.base import Entity, EntityType
 
@@ -170,16 +170,18 @@ class DesignDecision(BaseModel):
 class PrimitiveTypeEntry(BaseModel):
     """A primitive type defined in the sv0 language."""
 
+    model_config = ConfigDict(protected_namespaces=())
+
     name: str
     width: int
     signed: bool | None = None
-    copy: bool
+    is_copy: bool
 
     def to_entity(self) -> Entity:
         """Convert to a graph entity node."""
         properties: dict[str, int | bool] = {
             "width": self.width,
-            "copy": self.copy,
+            "copy": self.is_copy,
         }
         if self.signed is not None:
             properties["signed"] = self.signed
