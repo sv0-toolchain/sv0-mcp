@@ -177,3 +177,11 @@ uv run ruff format src/ tests/
 | `SV0_MCP_TOOLCHAIN_ROOT` | auto-detected | path to sv0-toolchain root |
 | `SV0_MCP_WATCH_DEBOUNCE_SECONDS` | `1.0` | file watcher debounce interval |
 | `SV0_MCP_LOG_LEVEL` | `INFO` | logging level |
+
+## development tracking
+
+when this repository is checked out as **`sv0-mcp/`** inside the parent **sv0-toolchain** meta-repo:
+
+- workspace index: [`task/sv0-toolchain-workspace.Rmd`](../task/sv0-toolchain-workspace.Rmd)
+- MCP milestone tasks: [`task/sv0-mcp-milestone-0.Rmd`](../task/sv0-mcp-milestone-0.Rmd)
+- aggregate tests from parent: `./scripts/sv0 test-mcp` or `make -C .. test-mcp`
