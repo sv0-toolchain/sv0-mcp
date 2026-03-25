@@ -266,6 +266,64 @@ def create_server() -> FastMCP:  # noqa: PLR0915
         return "\n".join(lines)
 
     @mcp.tool()
+    def get_roadmap_children(roadmap_key: str) -> str:
+        """List entities linked under a roadmap via PART_OF.
+
+        Task ``.Rmd`` files set ``roadmap_parent`` in YAML; the sync
+        engine creates ``(child)-[:PART_OF]->(roadmap)``.
+
+        Args:
+            roadmap_key: Roadmap entity name
+                (e.g. ``sv0-toolchain-roadmap-full``).
+
+        Returns:
+            Formatted list of child names, types, states, and titles.
+        """
+        query = (
+            "MATCH (r:Entity {name: $key}) "
+            "WHERE r.entity_type = 'Roadmap' "
+            "OPTIONAL MATCH (child:Entity)-[:PART_OF]->(r) "
+            "RETURN r.title AS roadmap_title, "
+            "r.state AS roadmap_state, "
+            "collect(DISTINCT {"
+            "name: child.name, "
+            "entity_type: child.entity_type, "
+            "state: child.state, "
+            "title: child.title"
+            "}) AS children"
+        )
+        try:
+            results = client.execute_read(
+                query, {"key": roadmap_key}
+            )
+        except Exception as exc:
+            return (
+                f"Error fetching roadmap "
+                f"'{roadmap_key}': {exc}"
+            )
+        if not results:
+            return f"Roadmap '{roadmap_key}' not found."
+        row = results[0]
+        children = [c for c in row["children"] if c.get("name")]
+        lines = [
+            f"Roadmap: {roadmap_key}",
+            f"  Title: {row.get('roadmap_title') or 'N/A'}",
+            f"  State: {row.get('roadmap_state') or 'unknown'}",
+            "",
+            f"  Children ({len(children)}):",
+        ]
+        for c in sorted(children, key=lambda x: str(x.get("name", ""))):
+            lines.append(
+                f"    - {c.get('name', '?')} "
+                f"[{c.get('entity_type', '?')}] "
+                f"state={c.get('state', '?')}"
+            )
+            title = c.get("title")
+            if title:
+                lines.append(f"      {title}")
+        return "\n".join(lines)
+
+    @mcp.tool()
     def get_dependencies(entity_name: str) -> str:
         """Get all dependencies for an entity.
 
@@ -705,6 +763,40 @@ def create_server() -> FastMCP:  # noqa: PLR0915
             lines.append(
                 f"    Progress: "
                 f"{done}/{total} ({pct:.0f}%)"
+            )
+        return "\n".join(lines)
+
+    @mcp.resource("sv0://roadmaps")
+    def get_roadmaps_resource() -> str:
+        """All roadmap entities and PART_OF children."""
+        query = (
+            "MATCH (r:Entity) "
+            "WHERE r.entity_type = 'Roadmap' "
+            "OPTIONAL MATCH (child:Entity)-[:PART_OF]->(r) "
+            "RETURN r.name AS roadmap, "
+            "r.title AS title, "
+            "r.state AS state, "
+            "collect(DISTINCT child.name) AS children"
+        )
+        try:
+            results = client.execute_read(query)
+        except Exception as exc:
+            return f"Error reading roadmaps: {exc}"
+        if not results:
+            return "No roadmaps found. Run `sv0-mcp sync --scope tasks`."
+        lines = ["Roadmaps (option C full toolchain index):\n"]
+        for r in results:
+            kids = sorted(
+                n for n in (r["children"] or []) if n
+            )
+            lines.append(
+                f"  {r['roadmap']}: "
+                f"{r.get('title', 'N/A')} "
+                f"[{r.get('state', '?')}]"
+            )
+            lines.append(
+                f"    children ({len(kids)}): "
+                f"{', '.join(kids) if kids else '—'}"
             )
         return "\n".join(lines)
 

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch  # noqa: F401
     from pytest_mock.plugin import MockerFixture  # noqa: F401
 
-EXPECTED_ENTITY_TYPE_COUNT = 20
+EXPECTED_ENTITY_TYPE_COUNT = 21
 EXPECTED_RELATION_TYPE_COUNT = 13
 
 
@@ -96,6 +96,7 @@ class TestEntityTypeEnum:
             "VM_MODULE",
             "TASK",
             "MILESTONE",
+            "ROADMAP",
             "SOURCE_FILE",
             "DIRECTORY",
             "SUBPROJECT",

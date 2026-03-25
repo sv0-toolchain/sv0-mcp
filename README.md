@@ -113,8 +113,10 @@ add the following to your cursor MCP settings to connect both the generic and cu
 | specification (sv0doc) | GrammarProduction, TypeRule, ContractRule, MemoryRule, Keyword, Operator, PrimitiveType, TraitSpec, DesignDecision |
 | compiler (sv0c) | CompilerPhase, CompilerModule, AstNode, IrConstruct |
 | vm (sv0vm) | VmComponent, VmModule |
-| workflow | Task, Milestone |
+| workflow | Task, Milestone, Roadmap |
 | structure | SourceFile, Directory, Subproject |
+
+task ``.Rmd`` YAML: optional ``graph_entity_type`` (`task` \| `milestone` \| `roadmap`) overrides the default milestone heuristic; ``roadmap_parent`` links a node to a Roadmap via ``PART_OF``.
 
 ### relationship types
 
@@ -128,7 +130,7 @@ add the following to your cursor MCP settings to connect both the generic and cu
 | CONSUMES | phase consumes input |
 | SPECIFIES | spec entity specifies a compiler phase |
 | REFERENCES | entity references another (e.g. grammar cross-references) |
-| PART_OF | entity belongs to a subproject |
+| PART_OF | entity belongs to a subproject, or a task/milestone belongs to a **Roadmap** (`roadmap_parent` in task YAML) |
 | PRECEDES | ordering between phases/components |
 | TRACES_TO | traceability link from spec to implementation |
 | INCLUDES | milestone includes task |
@@ -142,6 +144,7 @@ add the following to your cursor MCP settings to connect both the generic and cu
 | `trace_rule_to_implementation` | find implementations of a spec rule |
 | `get_task_status` | task status, title, tags, dependencies |
 | `get_milestone_progress` | milestone completion percentage |
+| `get_roadmap_children` | milestones/tasks under a Roadmap (`PART_OF`) |
 | `get_dependencies` | all dependencies for an entity |
 | `get_compiler_pipeline` | full compiler pipeline view |
 | `search_spec` | search across spec entities |

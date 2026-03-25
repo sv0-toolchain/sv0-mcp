@@ -28,6 +28,7 @@ class EntityType(StrEnum):
     VM_MODULE = "VmModule"
     TASK = "Task"
     MILESTONE = "Milestone"
+    ROADMAP = "Roadmap"
     SOURCE_FILE = "SourceFile"
     DIRECTORY = "Directory"
     SUBPROJECT = "Subproject"

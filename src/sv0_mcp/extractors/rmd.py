@@ -28,9 +28,16 @@ class RmdExtractor(BaseExtractor):
     """Parse ``.Rmd`` task files in ``task/`` and extract task entities.
 
     Produces:
-    - ``TASK`` or ``MILESTONE`` entities (based on the front-matter key).
+    - ``TASK``, ``MILESTONE``, or ``ROADMAP`` entities (see below).
     - ``INCLUDES`` relationships from milestones to child tasks.
     - ``DEPENDS_ON`` relationships derived from ``/require:`` directives.
+    - ``PART_OF`` from a task/milestone to a roadmap when ``roadmap_parent`` is set.
+
+    Entity kind:
+    - Optional YAML ``graph_entity_type``: ``task`` | ``milestone`` | ``roadmap``
+      (overrides the default heuristic).
+    - Default: ``MILESTONE`` if ``milestone`` appears in the task ``key``,
+      otherwise ``TASK``.
     """
 
     def __init__(self, root_path: Path) -> None:
@@ -71,9 +78,10 @@ class RmdExtractor(BaseExtractor):
         front_matter, body = _split_front_matter(text)
 
         task_key: str = front_matter.get("key", path.stem)
-        is_milestone = "milestone" in task_key
-
-        entity_type = EntityType.MILESTONE if is_milestone else EntityType.TASK
+        entity_type = _entity_type_from_front_matter(
+            front_matter,
+            task_key,
+        )
         properties: dict[str, Any] = {
             "id": front_matter.get("id", f"task-{task_key}"),
             "key": task_key,
@@ -86,8 +94,21 @@ class RmdExtractor(BaseExtractor):
         tags = front_matter.get("tags")
         if isinstance(tags, list):
             properties["tags"] = tags
+        updated = front_matter.get("updated")
+        if updated is not None:
+            properties["updated"] = str(updated)
 
         observations: list[str] = []
+
+        roadmap_parent = front_matter.get("roadmap_parent")
+        if isinstance(roadmap_parent, str) and roadmap_parent.strip():
+            relationships.append(
+                Relationship(
+                    source=task_key,
+                    target=roadmap_parent.strip(),
+                    relation_type=RelationType.PART_OF,
+                )
+            )
 
         # /include: directives → INCLUDES relationships
         for match in _INCLUDE_RE.finditer(body):
@@ -132,6 +153,25 @@ class RmdExtractor(BaseExtractor):
 # ======================================================================
 # Module-level helpers
 # ======================================================================
+
+
+def _entity_type_from_front_matter(
+    front_matter: dict[str, Any],
+    task_key: str,
+) -> EntityType:
+    """Resolve graph entity type from YAML or key heuristic."""
+    raw = front_matter.get("graph_entity_type")
+    if isinstance(raw, str):
+        lowered = raw.strip().lower()
+        if lowered == "roadmap":
+            return EntityType.ROADMAP
+        if lowered == "milestone":
+            return EntityType.MILESTONE
+        if lowered == "task":
+            return EntityType.TASK
+    if "milestone" in task_key:
+        return EntityType.MILESTONE
+    return EntityType.TASK
 
 
 def _split_front_matter(text: str) -> tuple[dict[str, Any], str]:

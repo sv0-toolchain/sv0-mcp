@@ -42,10 +42,21 @@ class TestRmdExtractor:
         assert len(milestone_entities) > 0, "Expected at least one Milestone entity"
 
         milestone_keys = {e.name for e in milestone_entities}
-        expected = {"sv0c-milestone-1", "sv0doc-milestone-0", "sv0vm-milestone-2"}
+        expected = {
+            "sv0c-milestone-1",
+            "sv0doc-milestone-0",
+            "sv0vm-milestone-2",
+            "sv0-toolchain-milestone-2-prep",
+            "sv0-toolchain-milestone-3-self-host",
+            "sv0-toolchain-milestone-4-verification",
+            "sv0-toolchain-milestone-5-llvm-crypto",
+            "sv0-toolchain-milestone-6-kernel",
+            "sv0-toolchain-milestone-cross-cutting",
+        }
         found = expected & milestone_keys
-        assert len(found) > 0, (
-            f"Expected milestones among {expected}, got {milestone_keys}"
+        assert found == expected, (
+            f"Expected option-C milestone keys {expected}, "
+            f"missing {expected - found}, got {milestone_keys}"
         )
 
     def test_includes_relationships(self, toolchain_root: Path) -> None:
@@ -57,6 +68,28 @@ class TestRmdExtractor:
             r for r in result.relationships if r.relation_type == RelationType.INCLUDES
         ]
         assert len(includes_rels) > 0, "Expected at least one INCLUDES relationship"
+
+    def test_roadmap_entity_and_part_of(self, toolchain_root: Path) -> None:
+        """Roadmap YAML and roadmap_parent create Roadmap + PART_OF edges."""
+        extractor = RmdExtractor(toolchain_root)
+        result = extractor.extract()
+
+        roadmaps = [
+            e for e in result.entities if e.entity_type == EntityType.ROADMAP
+        ]
+        assert any(
+            e.name == "sv0-toolchain-roadmap-full" for e in roadmaps
+        ), "Expected sv0-toolchain-roadmap-full Roadmap entity"
+
+        part_of = [
+            r
+            for r in result.relationships
+            if r.relation_type == RelationType.PART_OF
+        ]
+        targets = {r.target for r in part_of}
+        assert "sv0-toolchain-roadmap-full" in targets
+        sources = {r.source for r in part_of}
+        assert "sv0-toolchain-milestone-3-self-host" in sources
 
     def test_depends_on_relationships(self, toolchain_root: Path) -> None:
         """/require: directives should create DEPENDS_ON relationships."""
