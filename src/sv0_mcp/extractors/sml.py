@@ -77,7 +77,14 @@ class SmlExtractor(BaseExtractor):
             entities.append(file_entity)
 
             if sml_path.suffix in {".sml", ".sig"}:
-                text = sml_path.read_text(encoding="utf-8")
+                try:
+                    text = sml_path.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    logger.warning(
+                        "Skipping non-UTF-8 SML path (unexpected outside .cm): %s",
+                        rel_path,
+                    )
+                    continue
                 self._parse_declarations(text, rel_path, entities, relationships)
 
         return ExtractionResult(entities=entities, relationships=relationships)
@@ -87,11 +94,18 @@ class SmlExtractor(BaseExtractor):
     # ------------------------------------------------------------------
 
     def _collect_sml_files(self) -> list[Path]:
-        """Return all SML/sig/cm files under the subproject, sorted."""
+        """Return all SML/sig/cm files under the subproject, sorted.
+
+        Skips paths under ``.cm/`` (SML/NJ Compilation Manager caches), which
+        reuse ``.sml`` / ``.sig`` suffixes for binary artifacts and are not UTF-8
+        text.
+        """
         return sorted(
             p
             for p in self._subproject_path.rglob("*")
-            if p.is_file() and p.suffix in _SML_EXTENSIONS
+            if p.is_file()
+            and p.suffix in _SML_EXTENSIONS
+            and ".cm" not in p.parts
         )
 
     # ------------------------------------------------------------------
