@@ -101,6 +101,27 @@ class TestRmdExtractor:
         ]
         assert len(depends_rels) > 0, "Expected at least one DEPENDS_ON relationship"
 
+    def test_tolerates_missing_space_after_colon_in_front_matter(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Known keys like ``state:done`` should parse (normalizer + no crash)."""
+        task_dir = tmp_path / "task"
+        task_dir.mkdir()
+        (task_dir / "loose-yaml.Rmd").write_text(
+            "---\n"
+            "key: loose-yaml\n"
+            "state:done\n"
+            "title: loose\n"
+            "type: task\n"
+            "---\n\nbody\n",
+            encoding="utf-8",
+        )
+        extractor = RmdExtractor(tmp_path)
+        result = extractor.extract()
+        assert len(result.entities) == 1
+        assert result.entities[0].properties.get("state") == "done"
+
     def test_missing_task_dir(self, tmp_path: Path) -> None:
         """Extractor should return empty result when task directory is absent."""
         extractor = RmdExtractor(tmp_path)

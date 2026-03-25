@@ -23,6 +23,23 @@ _ASSERT_RE = re.compile(r"^/assert:\s*(.+)$", re.MULTILINE)
 _ENV_RE = re.compile(r"^/env:\s*(.+)$", re.MULTILINE)
 _PHASE_RE = re.compile(r"^## phase\s+(\d+):\s*(.+)$", re.MULTILINE | re.IGNORECASE)
 
+# Task Rmd front-matter keys we may auto-fix when `:` is missing a space (`state:done`).
+_KNOWN_FM_KEYS = frozenset({
+    "created",
+    "graph_entity_type",
+    "id",
+    "key",
+    "roadmap_parent",
+    "state",
+    "tags",
+    "title",
+    "type",
+    "updated",
+})
+_LINE_MISSING_SPACE_AFTER_COLON = re.compile(
+    r"^(?P<prefix>\s*)(?P<key>[a-zA-Z0-9_]+):(?P<rest>\S.*)$",
+)
+
 
 class RmdExtractor(BaseExtractor):
     """Parse ``.Rmd`` task files in ``task/`` and extract task entities.
@@ -59,7 +76,13 @@ class RmdExtractor(BaseExtractor):
         relationships: list[Relationship] = []
 
         for rmd_path in sorted(self._task_dir.glob("*.Rmd")):
-            self._extract_task(rmd_path, entities, relationships)
+            try:
+                self._extract_task(rmd_path, entities, relationships)
+            except Exception:
+                logger.exception(
+                    "Skipping task file (parse error): %s",
+                    rmd_path,
+                )
 
         return ExtractionResult(entities=entities, relationships=relationships)
 
@@ -188,6 +211,21 @@ def _split_front_matter(text: str) -> tuple[dict[str, Any], str]:
         if lines[i].strip() == "---":
             yaml_str = "\n".join(lines[1:i])
             body = "\n".join(lines[i + 1 :])
+            yaml_str = _normalize_front_matter_yaml(yaml_str)
             data: dict[str, Any] = yaml.safe_load(yaml_str) or {}
             return data, body
     return {}, text
+
+
+def _normalize_front_matter_yaml(yaml_str: str) -> str:
+    """Insert a space after ``:`` for known keys when authors omit it (``state:done``)."""
+    out_lines: list[str] = []
+    for line in yaml_str.splitlines():
+        m = _LINE_MISSING_SPACE_AFTER_COLON.match(line)
+        if m and m.group("key") in _KNOWN_FM_KEYS:
+            out_lines.append(
+                f"{m.group('prefix')}{m.group('key')}: {m.group('rest')}",
+            )
+        else:
+            out_lines.append(line)
+    return "\n".join(out_lines)

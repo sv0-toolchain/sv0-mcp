@@ -116,7 +116,7 @@ add the following to your cursor MCP settings to connect both the generic and cu
 | workflow | Task, Milestone, Roadmap |
 | structure | SourceFile, Directory, Subproject |
 
-task ``.Rmd`` YAML: optional ``graph_entity_type`` (`task` \| `milestone` \| `roadmap`) overrides the default milestone heuristic; ``roadmap_parent`` links a node to a Roadmap via ``PART_OF``.
+task ``.Rmd`` YAML: optional ``graph_entity_type`` (`task` \| `milestone` \| `roadmap`) overrides the default milestone heuristic; ``roadmap_parent`` links a node to a Roadmap via ``PART_OF``. the task extractor normalizes a missing space after ``:`` for known keys (e.g. ``state:done`` → ``state: done``) and skips any file that still fails to parse, logging an error instead of aborting the whole sync.
 
 ### relationship types
 
