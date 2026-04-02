@@ -1,4 +1,4 @@
-# Standalone sv0-mcp: Python tests via uv.
+# Standalone sv0-mcp: pytest against the real sv0-toolchain tree (sv0doc, task, subprojects).
 name: CI
 
 on:
@@ -14,16 +14,34 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  SV0TOOLCHAIN_ROOT: ${{ github.workspace }}/meta-toolchain
+
 jobs:
   test:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Use HTTPS for SSH-form submodule URLs in meta .gitmodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Checkout sv0-mcp (this repo)
+        uses: actions/checkout@v4
+
+      - name: Checkout sv0-toolchain meta (spec + layout for extractors)
+        uses: actions/checkout@v4
+        with:
+          repository: sv0-toolchain/sv0-toolchain
+          ref: main
+          submodules: recursive
+          path: meta-toolchain
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
 
       - name: Sync and pytest
         run: |

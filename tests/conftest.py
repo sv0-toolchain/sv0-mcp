@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 import pytest
@@ -20,10 +21,23 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def toolchain_root() -> Path:
-    """Return the absolute path to the sv0-toolchain workspace root."""
+    """Return the absolute path to the sv0-toolchain workspace root.
+
+    Uses ``SV0TOOLCHAIN_ROOT`` when set (standalone CI checks out the meta-repo
+    beside this package). When ``sv0-mcp`` lives under the meta-repo, the parent
+    of the ``sv0-mcp`` directory is the toolchain root.
+    """
     from pathlib import Path as _Path  # noqa: PLC0415
 
-    return _Path(__file__).resolve().parent.parent.parent
+    env = os.environ.get("SV0TOOLCHAIN_ROOT", "").strip()
+    if env:
+        return _Path(env).expanduser().resolve()
+    here = _Path(__file__).resolve()
+    mcp_root = here.parent.parent
+    parent = mcp_root.parent
+    if (parent / "sv0doc").is_dir() and (parent / "sv0c").is_dir():
+        return parent
+    return mcp_root
 
 
 @pytest.fixture
