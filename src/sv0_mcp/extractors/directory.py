@@ -37,28 +37,28 @@ _SOURCE_EXTENSIONS: frozenset[str] = frozenset(
 )
 
 _COMPILER_PHASES: list[tuple[str, str, str, str]] = [
-    ("lexer", "source text", "token stream", "sv0c/src/lexer"),
-    ("parser", "token stream", "untyped AST", "sv0c/src/parser"),
+    ("lexer", "source text", "token stream", "sv0c/sml/lexer"),
+    ("parser", "token stream", "untyped AST", "sv0c/sml/parser"),
     (
         "name_resolution",
         "untyped AST",
         "resolved AST",
-        "sv0c/src/name_resolution",
+        "sv0c/sml/name_resolution",
     ),
     (
         "type_checker",
         "resolved AST",
         "typed AST",
-        "sv0c/src/type_checker",
+        "sv0c/sml/type_checker",
     ),
     (
         "contract_analyzer",
         "typed AST",
         "annotated AST",
-        "sv0c/src/contract_analyzer",
+        "sv0c/sml/contract_analyzer",
     ),
-    ("ir", "annotated AST", "sv0-IR", "sv0c/src/ir"),
-    ("c_backend", "sv0-IR", "C source", "sv0c/src/backend/c"),
+    ("ir", "annotated AST", "sv0-IR", "sv0c/sml/ir"),
+    ("c_backend", "sv0-IR", "C source", "sv0c/sml/backend/c"),
 ]
 
 _VM_COMPONENTS: list[tuple[str, str]] = [

@@ -70,7 +70,7 @@ def sample_rmd() -> str:
         "\n"
         "/require: sml-nj\n"
         "/include: sv0doc-extract-grammar.Rmd\n"
-        "/env: SRC_DIR=sv0c/src/lexer\n"
+        "/env: SRC_DIR=sv0c/sml/lexer\n"
         "\n"
         "## phase 1: Token Definitions\n"
         "\n"

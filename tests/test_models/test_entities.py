@@ -206,7 +206,7 @@ class TestCompilerPhaseToEntity:
             description="Tokenizes source text",
             input_type="source text",
             output_type="token stream",
-            source_dir="sv0c/src/lexer",
+            source_dir="sv0c/sml/lexer",
         )
         entity = phase.to_entity()
 
@@ -214,4 +214,4 @@ class TestCompilerPhaseToEntity:
         assert entity.entity_type == EntityType.COMPILER_PHASE
         assert entity.properties["input_type"] == "source text"
         assert entity.properties["output_type"] == "token stream"
-        assert entity.properties["source_dir"] == "sv0c/src/lexer"
+        assert entity.properties["source_dir"] == "sv0c/sml/lexer"
