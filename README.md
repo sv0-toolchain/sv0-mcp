@@ -171,6 +171,18 @@ task ``.Rmd`` YAML: optional ``graph_entity_type`` (`task` \| `milestone` \| `ro
 | `get_grammar_production` | specific grammar production EBNF |
 | `get_entity_graph` | entity with connected entities (depth-configurable) |
 
+## GitHub Actions CI
+
+workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) checks out **`sv0-toolchain/sv0-toolchain`** at **`main`** with **`submodules: recursive`**, then runs **`uv sync`** and **`pytest`**.
+
+if the job fails at the meta checkout step with **git exit 128** or messages like **`did not contain <sha>`** / **`not our ref`** for **`sv0doc`** (or another submodule), the **parent repo’s recorded submodule commit is not on GitHub yet**. fix:
+
+1. push the **submodule** repository so that SHA exists on **`main`** (or the branch the meta-repo expects), then
+2. push **`sv0-toolchain`** (if you only updated submodule pointers), then
+3. re-run the failed workflow.
+
+**push order for meta-repo changes:** submodule repos first, meta-repo last. optional check: `git ls-remote https://github.com/sv0-toolchain/sv0doc.git HEAD` should include the commit the meta-repo records for **`sv0doc/`**.
+
 ## development
 
 ```bash

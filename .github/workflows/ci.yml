@@ -28,6 +28,9 @@ jobs:
       - name: Checkout sv0-mcp (this repo)
         uses: actions/checkout@v4
 
+      # Meta-repo records exact submodule SHAs. Each commit must already exist on
+      # GitHub (push sv0doc/sv0c/sv0vm/sv0-mcp *before* pushing sv0-toolchain), or
+      # checkout fails with git exit 128 / "not our ref" on submodule fetch.
       - name: Checkout sv0-toolchain meta (spec + layout for extractors)
         uses: actions/checkout@v4
         with:
