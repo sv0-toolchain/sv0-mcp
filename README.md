@@ -104,6 +104,24 @@ add the following to your cursor MCP settings to connect both the generic and cu
 | **agent-triggered** | after .Rmd task execution | tasks + structure |
 | **on-demand** | `sv0-mcp sync` or MCP `sync_graph` tool | configurable scope |
 
+### when to run a full sync
+
+Hooks and the watcher keep the graph **mostly** current, but a **full** refresh is worth doing after **material** edits so MCP answers (`get_task_status`, `get_milestone_progress`, spec search, etc.) match the repo:
+
+- **`task/*.Rmd`** — new milestones, refinement logs, `state:` / `roadmap_parent:` / `graph_entity_type:` changes
+- **`sv0doc/**`** — normative spec files the extractor indexes (grammar, types, contracts, bytecode stubs, …)
+- **compiler / VM layout** — large moves under **`sv0c/`** or **`sv0vm/`** that change what “structure” sync ingests (e.g. new top-level module dirs)
+
+From this directory:
+
+```bash
+./scripts/sync-graph.sh all
+# same idea:
+uv run sv0-mcp sync --scope all
+```
+
+From Cursor, the **sv0-graph** MCP tool **`sync_graph`** with scope **`all`** performs the same merge. The parent **sv0-toolchain** [README](../README.md) points here for contributors who only read the submodule checkout.
+
 ## graph data model
 
 ### entity types
