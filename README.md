@@ -108,7 +108,7 @@ add the following to your cursor MCP settings to connect both the generic and cu
 
 Hooks and the watcher keep the graph **mostly** current, but a **full** refresh is worth doing after **material** edits so MCP answers (`get_task_status`, `get_milestone_progress`, spec search, etc.) match the repo:
 
-- **`task/*.Rmd`** — new milestones, refinement logs, `state:` / `roadmap_parent:` / `graph_entity_type:` changes
+- **`task/*.Rmd`** — new milestones, refinement logs, `state:` / `roadmap_parent:` / `graph_entity_type:` changes (including new child tasks such as **`task/sv0-toolchain-milestone-3-checklist.Rmd`**)
 - **`sv0doc/**`** — normative spec files the extractor indexes (grammar, types, contracts, bytecode stubs, …)
 - **compiler / VM layout** — large moves under **`sv0c/`** or **`sv0vm/`** that change what “structure” sync ingests (e.g. new top-level module dirs)
 
