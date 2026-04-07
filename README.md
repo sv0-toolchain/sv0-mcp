@@ -22,11 +22,27 @@ cd sv0-mcp
 docker compose up -d
 ```
 
-the sv0 graph runs on non-default ports to avoid conflicts:
+the bundled **docker compose** file publishes **non-default host ports** so a second Neo4j on the machine can keep using **7474** / **7687**:
 
 - HTTP browser: `http://localhost:7475`
 - bolt: `bolt://localhost:7688`
 - credentials: `neo4j` / `sv0-graph-dev`
+
+#### custom host ports (collisions or personal setup)
+
+you do **not** need to decide a port until something conflicts. when it does:
+
+1. edit **`docker-compose.yml`** — change only the **host** side (left) of the port mappings, e.g. `"7690:7687"` to expose Bolt on **7690**.
+2. set the same bolt URL everywhere you talk to this instance:
+   - **`SV0_MCP_NEO4J_URI`** — used by `uv run sv0-mcp sync`, `serve`, `watch`, and `./scripts/sync-graph.sh` (default `bolt://localhost:7688`; see **environment variables** below).
+   - **Cursor `sv0-neo4j-cypher`** — **`NEO4J_URI`** must match the same bolt URL.
+   - **Cursor `sv0-graph`** — add **`SV0_MCP_NEO4J_URI`** to `env` with that same URI (see example below).
+
+remote Neo4j (team server, tunnel, etc.) works the same way: set **`SV0_MCP_NEO4J_URI`** (and **`NEO4J_URI`** for cypher MCP) to the full bolt URL you were given.
+
+#### troubleshooting: connection refused
+
+if sync or serve logs **connection refused** to localhost, Neo4j is not listening on the URI you configured. check **`docker compose ps`**, confirm the **published host port** matches **`SV0_MCP_NEO4J_URI`**, and try the browser URL on the matching HTTP port.
 
 ### 2. install dependencies
 
@@ -67,6 +83,8 @@ add the following to your cursor MCP settings to connect both the generic and cu
 }
 ```
 
+match **`NEO4J_URI`** to **`SV0_MCP_NEO4J_URI`** whenever you change the docker compose host port or use a remote bolt URL.
+
 ### custom sv0 graph server
 
 ```json
@@ -75,11 +93,14 @@ add the following to your cursor MCP settings to connect both the generic and cu
     "command": "uv",
     "args": ["--directory", "/path/to/sv0-toolchain/sv0-mcp", "run", "sv0-mcp", "serve"],
     "env": {
-      "SV0_MCP_TOOLCHAIN_ROOT": "/path/to/sv0-toolchain"
+      "SV0_MCP_TOOLCHAIN_ROOT": "/path/to/sv0-toolchain",
+      "SV0_MCP_NEO4J_URI": "bolt://localhost:7688"
     }
   }
 }
 ```
+
+omit **`SV0_MCP_NEO4J_URI`** to use the default, or set it to the same bolt URL as **`NEO4J_URI`** above when you use a custom host port.
 
 ## cli commands
 
@@ -203,7 +224,7 @@ uv run ruff format src/ tests/
 
 | variable | default | description |
 |---|---|---|
-| `SV0_MCP_NEO4J_URI` | `bolt://localhost:7688` | neo4j bolt uri |
+| `SV0_MCP_NEO4J_URI` | `bolt://localhost:7688` | bolt URI; override if you change the **host** port in `docker-compose.yml` or use a remote instance (must match `NEO4J_URI` in Cursor for `sv0-neo4j-cypher`) |
 | `SV0_MCP_NEO4J_USER` | `neo4j` | neo4j username |
 | `SV0_MCP_NEO4J_PASSWORD` | `sv0-graph-dev` | neo4j password |
 | `SV0_MCP_NEO4J_DATABASE` | `neo4j` | neo4j database name |

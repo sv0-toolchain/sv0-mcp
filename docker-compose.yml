@@ -3,8 +3,11 @@ services:
     image: neo4j:5-community
     container_name: sv0-graph
     ports:
-      - "7475:7474"     # HTTP (avoid conflict with default 7474)
-      - "7688:7687"     # Bolt (avoid conflict with default 7687)
+      # Host ports (left) are chosen to avoid colliding with another Neo4j on 7474/7687.
+      # If these still clash, change the left side only, then set SV0_MCP_NEO4J_URI (and
+      # Cursor NEO4J_URI for mcp-neo4j-cypher) to bolt://localhost:<your-bolt-host-port>.
+      - "7475:7474"     # HTTP browser
+      - "7688:7687"     # Bolt
     environment:
       - NEO4J_AUTH=neo4j/sv0-graph-dev
       - NEO4J_PLUGINS=["apoc"]
