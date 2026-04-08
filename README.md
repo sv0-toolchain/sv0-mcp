@@ -133,6 +133,7 @@ Hooks and the watcher keep the graph **mostly** current, but a **full** refresh 
 - **`sv0doc/**`** — normative spec files the extractor indexes (grammar, types, contracts, bytecode stubs, …)
 - **`sv0c/examples/learn/**`** — new or renamed numbered tutorials (learning corpus indexed for agent discovery)
 - **`sv0c/examples/libs/**`** — new educational library-shaped packages (`edu_*`, README index)
+- **`sv0c/lib/self-host-sv0-loop.list`** or **`sv0c/doc/self-host-sv0-loop.md`** — pilot expansion or loop semantics (M3 harness)
 - **compiler / VM layout** — large moves under **`sv0c/`** or **`sv0vm/`** that change what “structure” sync ingests (e.g. new top-level module dirs)
 
 From this directory:
