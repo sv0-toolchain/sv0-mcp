@@ -45,6 +45,7 @@ class TestRmdExtractor:
         expected = {
             "sv0c-milestone-1",
             "sv0doc-milestone-0",
+            "sv0-mcp-milestone-0",
             "sv0vm-milestone-2",
             "sv0-toolchain-milestone-2-prep",
             "sv0-toolchain-milestone-3-self-host",
