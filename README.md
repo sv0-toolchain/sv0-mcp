@@ -131,6 +131,7 @@ Hooks and the watcher keep the graph **mostly** current, but a **full** refresh 
 
 - **`task/*.Rmd`** — new milestones, refinement logs, `state:` / `roadmap_parent:` / `graph_entity_type:` changes (including new child tasks such as **`task/sv0-toolchain-milestone-3-checklist.Rmd`**)
 - **`sv0doc/**`** — normative spec files the extractor indexes (grammar, types, contracts, bytecode stubs, …)
+- **`sv0c/examples/learn/**`** — new or renamed numbered tutorials (learning corpus indexed for agent discovery)
 - **compiler / VM layout** — large moves under **`sv0c/`** or **`sv0vm/`** that change what “structure” sync ingests (e.g. new top-level module dirs)
 
 From this directory:
