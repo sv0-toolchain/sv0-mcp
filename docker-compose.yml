@@ -1,3 +1,12 @@
+# Neo4j + meta-repo progress dashboard (task/*.Rmd digest UI).
+#
+# Default bind mount: parent of this directory = sv0-toolchain root when sv0-mcp is a
+# submodule. Override with SV0_MCP_TOOLCHAIN_ROOT=/absolute/path/to/sv0-toolchain.
+#
+# Progress UI host port defaults to 8766 so it does not collide with `uv run sv0-mcp serve`,
+# which spawns the same server on 127.0.0.1:8765 on the host. Override with
+# SV0_MCP_PROGRESS_DASHBOARD_HOST_PORT.
+
 services:
   neo4j:
     image: neo4j:5-community
@@ -16,6 +25,27 @@ services:
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
+
+  progress-dashboard:
+    image: python:3.12-slim
+    container_name: sv0-progress-dashboard
+    restart: unless-stopped
+    working_dir: /workspace
+    volumes:
+      - ${SV0_MCP_TOOLCHAIN_ROOT:-..}:/workspace:ro
+    command:
+      - python3
+      - scripts/progress_dashboard_server.py
+      - --root
+      - /workspace
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8765"
+      - --refresh-seconds
+      - ${SV0_MCP_PROGRESS_DASHBOARD_REFRESH:-120}
+    ports:
+      - "${SV0_MCP_PROGRESS_DASHBOARD_HOST_PORT:-8766}:8765"
 
 volumes:
   neo4j-data:

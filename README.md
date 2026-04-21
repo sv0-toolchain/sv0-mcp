@@ -15,18 +15,32 @@ two MCP servers provide AI-assisted development:
 
 ## setup
 
-### 1. start the neo4j instance
+### 1. start the neo4j instance (and progress dashboard)
 
 ```bash
 cd sv0-mcp
 docker compose up -d
 ```
 
-the bundled **docker compose** file publishes **non-default host ports** so a second Neo4j on the machine can keep using **7474** / **7687**:
+`docker compose up -d` starts **two** services by default:
+
+1. **Neo4j** — the bundled **docker compose** file publishes **non-default host ports** so a second Neo4j on the machine can keep using **7474** / **7687**:
 
 - HTTP browser: `http://localhost:7475`
 - bolt: `bolt://localhost:7688`
 - credentials: `neo4j` / `sv0-graph-dev`
+
+1. **progress dashboard** — HTTP UI for **`sv0-track`** digests + milestones (same `scripts/progress_dashboard_server.py` as **`./scripts/sv0 progress-dashboard`**). The container mounts the **sv0-toolchain** meta-repo read-only and listens on **`0.0.0.0:8765`** inside the container.
+
+- browser (default host port): **`http://localhost:8766/`** — host **8766** → container **8765**, so this does not fight **`uv run sv0-mcp serve`**, which spawns the dashboard on the host at **127.0.0.1:8765** by default.
+
+| compose / env | effect |
+|---|---|
+| `SV0_MCP_TOOLCHAIN_ROOT` | absolute path to **sv0-toolchain** root for the bind mount (default: parent of `sv0-mcp/`, i.e. `..` from this compose file) |
+| `SV0_MCP_PROGRESS_DASHBOARD_HOST_PORT` | published **host** port (default **`8766`**) |
+| `SV0_MCP_PROGRESS_DASHBOARD_REFRESH` | API cache TTL in seconds (default **`120`**) |
+
+To start **only** Neo4j: `docker compose up -d neo4j`
 
 #### custom host ports (collisions or personal setup)
 
@@ -62,6 +76,16 @@ uv run sv0-mcp sync
 ```bash
 uv run sv0-mcp serve
 ```
+
+**progress dashboard (bundled):** `serve` also starts the meta-repo HTTP UI at **<http://127.0.0.1:8765/>** (stdlib server under `scripts/progress_dashboard_server.py`), so you can watch **sv0-track** digests without a second terminal. The dashboard re-reads `task/*.Rmd` only on a TTL (default **120s** server-side; the browser polls on a matching gentle interval).
+
+| variable | effect |
+|---|---|
+| `SV0_MCP_PROGRESS_DASHBOARD` | set to `0` / `false` / `no` to skip spawning the dashboard |
+| `SV0_MCP_PROGRESS_DASHBOARD_PORT` | listen port (default `8765`) |
+| `SV0_MCP_PROGRESS_DASHBOARD_REFRESH` | API cache TTL in seconds (default `120`; passed as `--refresh-seconds`) |
+
+When running **`./scripts/sv0 progress-dashboard`** directly (not via MCP), set **`SV0_PROGRESS_DASHBOARD_REFRESH`** for the same TTL (default `120`).
 
 ## cursor MCP configuration
 

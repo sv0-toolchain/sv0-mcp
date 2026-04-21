@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 import click
@@ -119,7 +120,9 @@ def sync(ctx: click.Context, scope: str) -> None:
         try:
             engine = GraphSyncEngine(client=client, settings=settings)
             result = engine.sync(SyncScope(scope))
-            console.print(f"[green]Sync completed (scope: {result.scope.value})[/green]")
+            console.print(
+                f"[green]Sync completed (scope: {result.scope.value})[/green]"
+            )
             console.print(f"  Entities created:  {result.entities_created}")
             console.print(f"  Entities updated:  {result.entities_updated}")
             console.print(f"  Relationships:     {result.relationships_created}")
@@ -187,7 +190,21 @@ def schema(ctx: click.Context) -> None:
 @click.pass_context
 def serve(ctx: click.Context, transport: str) -> None:
     """Start the MCP server."""
-    _require_root(ctx)
+    root = _require_root(ctx)
+    from sv0_mcp.progress_dashboard_launcher import (  # noqa: PLC0415
+        start_with_mcp,
+        stop_child,
+    )
+
+    dash_proc = start_with_mcp(root)
+    if dash_proc is not None:
+        port = (
+            os.environ.get("SV0_MCP_PROGRESS_DASHBOARD_PORT", "8765").strip() or "8765"
+        )
+        console.print(
+            f"[dim]Progress dashboard (sidecar):[/dim] http://127.0.0.1:{port}/ "
+            f"[dim](SV0_MCP_PROGRESS_DASHBOARD=0 to disable)[/dim]"
+        )
     try:
         from sv0_mcp.server.mcp import create_server  # noqa: PLC0415
 
@@ -197,6 +214,8 @@ def serve(ctx: click.Context, transport: str) -> None:
     except Exception as exc:
         console.print(f"[red]Error: {exc}[/red]")
         ctx.exit(1)
+    finally:
+        stop_child(dash_proc)
 
 
 @main.command()
@@ -235,7 +254,9 @@ def install_hooks_cmd(ctx: click.Context) -> None:
             for path in installed:
                 console.print(f"  [green]Installed:[/green] {path}")
         else:
-            console.print("[yellow]No hooks installed (repos may lack .git dirs).[/yellow]")
+            console.print(
+                "[yellow]No hooks installed (repos may lack .git dirs).[/yellow]"
+            )
     except Exception as exc:
         console.print(f"[red]Error: {exc}[/red]")
         ctx.exit(1)
@@ -305,7 +326,9 @@ def inspect(ctx: click.Context, entity_name: str, depth: int) -> None:  # noqa: 
                 return
 
             console.print(f"\n[bold cyan]{entity.get('name', entity_name)}[/bold cyan]")
-            console.print(f"  Type: [magenta]{entity.get('entity_type', 'unknown')}[/magenta]")
+            console.print(
+                f"  Type: [magenta]{entity.get('entity_type', 'unknown')}[/magenta]"
+            )
             obs = entity.get("observations", [])
             if obs:
                 console.print("  Observations:")
@@ -322,7 +345,11 @@ def inspect(ctx: click.Context, entity_name: str, depth: int) -> None:  # noqa: 
                     table.add_row(
                         str(rel.get("direction", "")),
                         str(rel.get("relation_type", "")),
-                        str(rel.get("other_name", rel.get("target", rel.get("source", "")))),
+                        str(
+                            rel.get(
+                                "other_name", rel.get("target", rel.get("source", ""))
+                            )
+                        ),
                     )
                 console.print(table)
         finally:
