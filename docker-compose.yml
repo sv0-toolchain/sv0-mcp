@@ -11,6 +11,11 @@ services:
   neo4j:
     image: neo4j:5-community
     container_name: sv0-graph
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
     ports:
       # Host ports (left) are chosen to avoid colliding with another Neo4j on 7474/7687.
       # If these still clash, change the left side only, then set SV0_MCP_NEO4J_URI (and
@@ -22,6 +27,10 @@ services:
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*
       - NEO4J_dbms_security_procedures_allowlist=apoc.*
+      # Dev-friendly caps so a laptop can run graph + dashboard alongside IDEs.
+      - NEO4J_server_memory_heap_initial__size=256m
+      - NEO4J_server_memory_heap_max__size=512m
+      - NEO4J_server_memory_pagecache_size=128M
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
@@ -29,6 +38,11 @@ services:
   progress-dashboard:
     image: python:3.12-slim
     container_name: sv0-progress-dashboard
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
     restart: unless-stopped
     working_dir: /workspace
     volumes:

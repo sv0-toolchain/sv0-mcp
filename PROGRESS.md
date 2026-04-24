@@ -2,7 +2,7 @@
 
 **Meta-repo rollup:** when this tree is the `sv0-mcp/` submodule of **sv0-toolchain**, the parent copies this file’s **`%`** into `task/sv0-toolchain-progress.md`. **Standalone clone:** keep this file authoritative here; reconcile on the next meta-repo integration.
 
-**Last updated:** 2026-04-21 (docker compose: **`progress-dashboard`** service + **`docker-compose.yml`** comments; **`README.md`** §1 stack URLs)
+**Last updated:** 2026-04-24 (docker compose: Neo4j heap/pagecache caps + **`deploy.resources.limits`** on **`neo4j`** / **`progress-dashboard`**; README **lightweight defaults**; dashboard child **`stderr=DEVNULL`** alongside stdout)
 
 ## Checklist (local source of truth)
 

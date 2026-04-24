@@ -72,7 +72,7 @@ def start_with_mcp(toolchain_root: Path) -> subprocess.Popen[bytes] | None:
             cwd=str(toolchain_root.resolve()),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
-            stderr=None,
+            stderr=subprocess.DEVNULL,
         )
     except OSError as exc:
         logger.warning("progress dashboard: failed to start: %s", exc)

@@ -40,6 +40,12 @@ docker compose up -d
 | `SV0_MCP_PROGRESS_DASHBOARD_HOST_PORT` | published **host** port (default **`8766`**) |
 | `SV0_MCP_PROGRESS_DASHBOARD_REFRESH` | API cache TTL in seconds (default **`120`**) |
 
+#### lightweight defaults (compose + MCP `serve`)
+
+The bundled **`docker-compose.yml`** applies **small Neo4j heap + pagecache** targets and **CPU / RAM limits** on both **`neo4j`** and **`progress-dashboard`** so a dev laptop can keep the stack up without starving the compiler. Tune further by raising **`SV0_MCP_PROGRESS_DASHBOARD_REFRESH`** (e.g. **`300`**) so the dashboard rescans **`task/*.Rmd`** less often.
+
+When you only need the **graph MCP tools** and not the host dashboard subprocess spawned by **`uv run sv0-mcp serve`**, set **`SV0_MCP_PROGRESS_DASHBOARD=0`** in the MCP server environment (same variable documented in **progress dashboard (bundled)** below).
+
 To start **only** Neo4j: `docker compose up -d neo4j`
 
 #### custom host ports (collisions or personal setup)
