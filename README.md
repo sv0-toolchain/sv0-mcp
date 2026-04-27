@@ -71,6 +71,8 @@ cd sv0-mcp
 uv sync
 ```
 
+For **`pytest`** / **`ruff`** / **`mypy`** (optional **`[dev]`** group), use **`uv sync --extra dev`** (or **`uv sync --all-extras`**) so **`uv run pytest`** resolves **`sv0_mcp`** from the editable install and has test dependencies.
+
 ### 3. initial sync
 
 ```bash
@@ -159,7 +161,8 @@ omit **`SV0_MCP_NEO4J_URI`** to use the default, or set it to the same bolt URL 
 
 Hooks and the watcher keep the graph **mostly** current, but a **full** refresh is worth doing after **material** edits so MCP answers (`get_task_status`, `get_milestone_progress`, spec search, etc.) match the repo:
 
-- **`task/*.Rmd`** — new milestones, refinement logs, `state:` / `roadmap_parent:` / `graph_entity_type:` changes (including new child tasks such as **`task/sv0-toolchain-milestone-3-checklist.Rmd`**)
+- **`task/*.Rmd`** — new milestones, refinement logs, `state:` / `roadmap_parent:` / `graph_entity_type:` changes (including **`task/sv0-toolchain-milestone-3-checklist.Rmd`** and **large edits** to **`task/sv0-toolchain-milestone-3-self-host.Rmd`** — e.g. **documented M3 slice backlog** **`M3-S-###`**, **## milestone depth and accuracy**, or completion-criteria mapping)
+- **`task/milestone-orientation.json`** — when **`pre_merge_validation`**, **`primary_tasks`**, or per-milestone automation fields change (workspace **`verify_workspace_milestone_table.py`** depends on alignment)
 - **`sv0doc/**`** — normative spec files the extractor indexes (grammar, types, contracts, bytecode stubs, …)
 - **`sv0c/examples/learn/**`** — new or renamed numbered tutorials (learning corpus indexed for agent discovery)
 - **`sv0c/examples/libs/**`** — new educational library-shaped packages (`edu_*`, README index)

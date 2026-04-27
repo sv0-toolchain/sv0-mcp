@@ -2,7 +2,9 @@
 
 **Meta-repo rollup:** when this tree is the `sv0-mcp/` submodule of **sv0-toolchain**, the parent copies this file’s **`%`** into `task/sv0-toolchain-progress.md`. **Standalone clone:** keep this file authoritative here; reconcile on the next meta-repo integration.
 
-**Last updated:** 2026-04-24 (docker compose: Neo4j heap/pagecache caps + **`deploy.resources.limits`** on **`neo4j`** / **`progress-dashboard`**; README **lightweight defaults**; dashboard child **`stderr=DEVNULL`** alongside stdout)
+**Last updated:** 2026-04-25 (README **“when to run a full sync”** — heavy **M3 self-host** task edits + **`task/milestone-orientation.json`**; **`task/sv0-mcp-milestone-0.Rmd`** refinement log; parent rollup run log). **Graph:** full sync run **`./scripts/sync-graph.sh all`** after **`docker compose up -d neo4j`** (**595** created, **63** updated, **1687** rels).
+
+**Earlier:** 2026-04-24 — docker compose: Neo4j heap/pagecache caps + **`deploy.resources.limits`** on **`neo4j`** / **`progress-dashboard`**; README **lightweight defaults**; dashboard child **`stderr=DEVNULL`** alongside stdout.
 
 ## Checklist (local source of truth)
 
