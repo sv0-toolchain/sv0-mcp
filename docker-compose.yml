@@ -15,7 +15,7 @@ services:
       resources:
         limits:
           cpus: "1.0"
-          memory: 1024M
+          memory: 3072M
     ports:
       # Host ports (left) are chosen to avoid colliding with another Neo4j on 7474/7687.
       # If these still clash, change the left side only, then set SV0_MCP_NEO4J_URI (and
