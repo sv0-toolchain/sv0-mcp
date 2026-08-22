@@ -275,3 +275,8 @@ when this repository is checked out as **`sv0-mcp/`** inside the parent **sv0-to
 - workspace index: [`task/sv0-toolchain-workspace.Rmd`](../task/sv0-toolchain-workspace.Rmd)
 - MCP milestone tasks: [`task/sv0-mcp-milestone-0.Rmd`](../task/sv0-mcp-milestone-0.Rmd)
 - aggregate tests from parent: `./scripts/sv0 test-mcp` or `make -C .. test-mcp`
+
+## license
+
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or
+[MIT license](LICENSE-MIT) at your option.

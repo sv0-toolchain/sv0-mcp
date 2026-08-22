@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Self-updating graph memory and MCP server for the sv0 programming language toolchain"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT OR Apache-2.0"
 authors = [{ name = "Sasank Vishnubhatla" }]
 
 dependencies = [
