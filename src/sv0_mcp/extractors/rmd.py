@@ -75,7 +75,8 @@ class RmdExtractor(BaseExtractor):
         entities: list[Entity] = []
         relationships: list[Relationship] = []
 
-        for rmd_path in sorted(self._task_dir.glob("*.Rmd")):
+        # rglob so completed sub-tasks under task/archive/ stay in the graph too.
+        for rmd_path in sorted(self._task_dir.rglob("*.Rmd")):
             try:
                 self._extract_task(rmd_path, entities, relationships)
             except Exception:
