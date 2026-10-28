@@ -10,10 +10,16 @@ from sv0_mcp.config import Sv0McpSettings
 from sv0_mcp.graph.client import GraphClient
 from sv0_mcp.graph.schema import apply_schema
 from sv0_mcp.graph.sync import GraphSyncEngine, SyncScope
+from sv0_mcp.slices import (
+    SliceIndex,
+    format_detail,
+    format_page,
+)
 
 logger = logging.getLogger(__name__)
 
 _MAX_GRAPH_DEPTH = 5
+_MAX_PAGE = 200
 
 
 def create_server() -> FastMCP:  # noqa: PLR0915
@@ -33,19 +39,144 @@ def create_server() -> FastMCP:  # noqa: PLR0915
         password=settings.neo4j_password,
         database=settings.neo4j_database,
     )
-    apply_schema(client)
+    # Slice tools read task files directly, so keep serving when Neo4j
+    # is down. Probe first: apply_schema alone retries for ~a minute.
+    if client.verify_connectivity():
+        apply_schema(client)
+    else:
+        logger.warning(
+            "Neo4j unavailable at %s; graph tools will error until it is up",
+            settings.neo4j_uri,
+        )
     engine = GraphSyncEngine(client, settings)
+    slice_index = SliceIndex(settings.toolchain_root)
 
     mcp = FastMCP(
         "sv0-graph",
         instructions=(
             "Knowledge graph server for the "
-            "sv0 programming language toolchain"
+            "sv0 programming language toolchain. "
+            "Before reading task/*checklist*.Rmd files, use "
+            "checklist_summary / list_slices / next_slices / get_slice: "
+            "they answer from the same rows in a fraction of the tokens."
         ),
     )
 
     # --------------------------------------------------------------
-    # Tools
+    # Slice tools (file-backed; no Neo4j required)
+    # --------------------------------------------------------------
+
+    @mcp.tool()
+    def checklist_summary() -> str:
+        """Status counts for every task file that tracks id-keyed slices.
+
+        Start here to pick a checklist; one line per file.
+
+        Returns:
+            ``stem: total (status counts) @file`` lines.
+        """
+        rows = sorted(
+            slice_index.summary(),
+            key=lambda r: r[0],
+        )
+        if not rows:
+            return "No slice tables found under task/."
+        lines = ["Checklists (stem: total — status counts):"]
+        for stem, path, counts in rows:
+            tally = ", ".join(
+                f"{k} {v}" for k, v in counts.most_common()
+            )
+            lines.append(
+                f"  {stem}: {sum(counts.values())} — {tally} @{path}"
+            )
+        return "\n".join(lines)
+
+    @mcp.tool()
+    def list_slices(
+        checklist: str = "",
+        status: str = "open",
+        query: str = "",
+        limit: int = 25,
+        offset: int = 0,
+    ) -> str:
+        """List checklist slices, one compact line each.
+
+        Args:
+            checklist: File-stem substring (``sv0cov``,
+                ``milestone-5``) or id prefix (``CV``,
+                ``M3-S``). Empty = all checklists.
+            status: ``open`` (todo/wip/blocked, default),
+                ``any``, or one of done/todo/wip/blocked/
+                deferred/draft/unknown.
+            query: Substring of id, title, or section.
+            limit: Page size (max 200).
+            offset: Rows to skip (from a previous page).
+
+        Returns:
+            Counts header, ``ID status title [deps] @file:line``
+            rows, and a continuation hint.
+        """
+        rows = slice_index.select(
+            checklist or None, status or None, query or None,
+        )
+        label = ", ".join(
+            f"{k}={v}"
+            for k, v in (
+                ("checklist", checklist),
+                ("status", status),
+                ("query", query),
+            )
+            if v
+        ) or "all"
+        return format_page(
+            rows,
+            min(max(limit, 1), _MAX_PAGE),
+            max(offset, 0),
+            label,
+        )
+
+    @mcp.tool()
+    def next_slices(checklist: str = "", limit: int = 10) -> str:
+        """Open slices whose dependencies are all done.
+
+        Args:
+            checklist: File-stem substring or id prefix
+                (see ``list_slices``). Empty = all.
+            limit: Maximum rows (max 200).
+
+        Returns:
+            Ready slices in checklist order, one line each.
+        """
+        rows = slice_index.ready(checklist or None)
+        return format_page(
+            rows,
+            min(max(limit, 1), _MAX_PAGE),
+            0,
+            f"ready{', checklist=' + checklist if checklist else ''}",
+        )
+
+    @mcp.tool()
+    def get_slice(slice_id: str, max_chars: int = 4000) -> str:
+        """Full row for one slice, with its file:line.
+
+        Args:
+            slice_id: Slice id, e.g. ``SS-190`` or ``M3-S-004``.
+            max_chars: Cap on cell text returned (default 4000).
+
+        Returns:
+            Every column of the canonical row plus other
+            files that mention the id.
+        """
+        rows = slice_index.get(slice_id)
+        if not rows:
+            return (
+                f"Slice '{slice_id}' not found. "
+                "Try list_slices(query=...)."
+            )
+        return format_detail(rows, max(max_chars, 200))
+
+    # --------------------------------------------------------------
+    # Graph tools
     # --------------------------------------------------------------
 
     @mcp.tool()

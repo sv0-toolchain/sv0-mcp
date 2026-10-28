@@ -11,6 +11,8 @@ from rich.console import Console
 from rich.table import Table
 
 console = Console()
+# stdio MCP owns stdout; anything `serve` prints must go to stderr.
+err_console = Console(stderr=True)
 logger = logging.getLogger(__name__)
 
 
@@ -201,7 +203,7 @@ def serve(ctx: click.Context, transport: str) -> None:
         port = (
             os.environ.get("SV0_MCP_PROGRESS_DASHBOARD_PORT", "8765").strip() or "8765"
         )
-        console.print(
+        err_console.print(
             f"[dim]Progress dashboard (sidecar):[/dim] http://127.0.0.1:{port}/ "
             f"[dim](SV0_MCP_PROGRESS_DASHBOARD=0 to disable)[/dim]"
         )
@@ -209,10 +211,10 @@ def serve(ctx: click.Context, transport: str) -> None:
         from sv0_mcp.server.mcp import create_server  # noqa: PLC0415
 
         mcp = create_server()
-        console.print(f"[green]Starting MCP server (transport: {transport})...[/green]")
+        err_console.print(f"[green]Starting MCP server (transport: {transport})...[/green]")
         mcp.run(transport=transport)
     except Exception as exc:
-        console.print(f"[red]Error: {exc}[/red]")
+        err_console.print(f"[red]Error: {exc}[/red]")
         ctx.exit(1)
     finally:
         stop_child(dash_proc)
@@ -357,3 +359,63 @@ def inspect(ctx: click.Context, entity_name: str, depth: int) -> None:  # noqa: 
     except Exception as exc:
         console.print(f"[red]Error: {exc}[/red]")
         ctx.exit(1)
+
+
+@main.command()
+@click.argument("checklist", required=False, default="")
+@click.option(
+    "--status",
+    default="open",
+    show_default=True,
+    help="open, any, or done/todo/wip/blocked/deferred/draft/unknown.",
+)
+@click.option("--query", default="", help="Substring of id, title, or section.")
+@click.option("--ready", is_flag=True, help="Only open slices whose deps are all done.")
+@click.option("--summary", is_flag=True, help="Per-checklist status counts.")
+@click.option("--limit", default=25, show_default=True)
+@click.option("--offset", default=0, show_default=True)
+@click.pass_context
+def slices(  # noqa: PLR0913
+    ctx: click.Context,
+    checklist: str,
+    status: str,
+    query: str,
+    ready: bool,
+    summary: bool,
+    limit: int,
+    offset: int,
+) -> None:
+    """List checklist slices compactly (no Neo4j needed).
+
+    CHECKLIST is a task file-stem substring (sv0cov) or id prefix (CV).
+    """
+    from sv0_mcp.slices import SliceIndex, format_page  # noqa: PLC0415
+
+    index = SliceIndex(_require_root(ctx))
+    if summary:
+        for stem, path, counts in sorted(index.summary()):
+            tally = ", ".join(f"{k} {v}" for k, v in counts.most_common())
+            click.echo(f"{stem}: {sum(counts.values())} — {tally} @{path}")
+        return
+    if ready:
+        rows = index.ready(checklist or None)
+        click.echo(format_page(rows, limit, offset, f"ready {checklist}".strip()))
+        return
+    rows = index.select(checklist or None, status or None, query or None)
+    label = " ".join(v for v in (checklist, f"status={status}", query) if v)
+    click.echo(format_page(rows, limit, offset, label))
+
+
+@main.command(name="slice")
+@click.argument("slice_id")
+@click.option("--max-chars", default=4000, show_default=True)
+@click.pass_context
+def slice_cmd(ctx: click.Context, slice_id: str, max_chars: int) -> None:
+    """Show one slice's full row with its file:line."""
+    from sv0_mcp.slices import SliceIndex, format_detail  # noqa: PLC0415
+
+    rows = SliceIndex(_require_root(ctx)).get(slice_id)
+    if not rows:
+        click.echo(f"Slice '{slice_id}' not found.", err=True)
+        ctx.exit(1)
+    click.echo(format_detail(rows, max_chars))

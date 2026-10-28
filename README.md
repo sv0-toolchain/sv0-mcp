@@ -147,6 +147,8 @@ omit **`SV0_MCP_NEO4J_URI`** to use the default, or set it to the same bolt URL 
 | `sv0-mcp uninstall-hooks` | remove git post-commit hooks |
 | `sv0-mcp search QUERY` | search for entities by name/content |
 | `sv0-mcp inspect ENTITY [--depth N]` | inspect an entity and its relationships |
+| `sv0-mcp slices [CHECKLIST] [--status S] [--ready] [--summary]` | compact checklist slice listing (no Neo4j needed) |
+| `sv0-mcp slice ID` | one slice's full row with its `file:line` |
 
 ## update mechanisms
 
@@ -215,6 +217,10 @@ task ``.Rmd`` YAML: optional ``graph_entity_type`` (`task` \| `milestone` \| `ro
 
 | tool | description |
 |---|---|
+| `checklist_summary` | status counts per checklist file — start here |
+| `list_slices` | slices one line each (`checklist`, `status` = open/any/…, `query`, `limit`/`offset`) |
+| `next_slices` | open slices whose dependencies are all done |
+| `get_slice` | one slice's full row (capped by `max_chars`) plus other files that mention it |
 | `get_spec_for_phase` | all spec entities relevant to a compiler phase |
 | `trace_rule_to_implementation` | find implementations of a spec rule |
 | `get_task_status` | task status, title, tags, dependencies |
@@ -227,6 +233,24 @@ task ``.Rmd`` YAML: optional ``graph_entity_type`` (`task` \| `milestone` \| `ro
 | `get_design_decisions` | all design decisions with rationale |
 | `get_grammar_production` | specific grammar production EBNF |
 | `get_entity_graph` | entity with connected entities (depth-configurable) |
+
+### checklist slice tools (context-efficient, no Neo4j)
+
+`checklist_summary`, `list_slices`, `next_slices`, and `get_slice` read **`task/**/*.Rmd`** directly
+(cached on file mtime/size), so they work even when Neo4j is down. They index every markdown table
+row keyed by a slice id (`SS-190`, `CV-012`, `M3-S-004`, `TID-001`, …) in tables whose first header
+column is `ID` or `Slice`. Status comes from a `status` column, or else from a leading status word
+in a cell (`**DONE (2026-08-05):** …`). It is normalized to
+`done`/`todo`/`wip`/`blocked`/`deferred`/`draft`/`unknown`; hub tables without a status column show `unknown`.
+
+Answers are one line per slice with a `file:line` pointer, so an agent can open just that row
+instead of the whole checklist. Measured on the current task files (≈4 chars/token):
+
+| question | tool output | reading the file |
+|---|---|---|
+| what's ready next in sv0cov? (`next_slices`) | ~280 tok | ~55.9k tok |
+| full detail for SS-190 (`get_slice`) | ~670 tok | ~47.4k tok |
+| blocked VS Code slices (`list_slices`) | ~350 tok | ~13.8k tok |
 
 ## GitHub Actions CI
 
