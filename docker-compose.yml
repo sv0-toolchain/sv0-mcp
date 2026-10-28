@@ -11,6 +11,15 @@ services:
   neo4j:
     image: neo4j:5-community
     container_name: sv0-graph
+    # Come back after a Docker Desktop restart, like the dashboard does.
+    restart: unless-stopped
+    # Healthy once the HTTP endpoint answers; `compose up --wait` blocks on this.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:7474"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 10s
     deploy:
       resources:
         limits:
@@ -60,6 +69,16 @@ services:
       - ${SV0_MCP_PROGRESS_DASHBOARD_REFRESH:-120}
     ports:
       - "${SV0_MCP_PROGRESS_DASHBOARD_HOST_PORT:-8766}:8765"
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
 
 volumes:
   neo4j-data:

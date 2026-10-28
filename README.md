@@ -39,6 +39,9 @@ docker compose up -d
 | `SV0_MCP_TOOLCHAIN_ROOT` | absolute path to **sv0-toolchain** root for the bind mount (default: parent of `sv0-mcp/`, i.e. `..` from this compose file) |
 | `SV0_MCP_PROGRESS_DASHBOARD_HOST_PORT` | published **host** port (default **`8766`**) |
 | `SV0_MCP_PROGRESS_DASHBOARD_REFRESH` | API cache TTL in seconds (default **`120`**) |
+| `SV0_MCP_LIGHT_STACK_WAIT` | seconds **`./scripts/sv0 mcp-light-stack up`** waits for both healthchecks (default **`180`**) |
+
+Both services carry healthchecks and **`restart: unless-stopped`**, so they come back after a Docker Desktop restart. **`mcp-light-stack up`** runs **`docker compose up -d --wait`**: it returns once Neo4j and the dashboard answer HTTP, and exits non-zero (rather than hanging) if the daemon cannot start them. If starts hang anyway after Docker's disk filled up, restart Docker Desktop; containerd can be left wedged.
 
 #### lightweight defaults (compose + MCP `serve`)
 
